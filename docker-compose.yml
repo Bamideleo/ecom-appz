@@ -1,0 +1,28 @@
+version: '3.9'
+
+services:
+  app:
+    build: .
+    container_name: ecom_appz_app
+    env_file:
+      - .env
+    ports:
+      - "8089:8089"
+    depends_on:
+      - postgres
+    restart: always
+
+  postgres:
+    image: postgres:15
+    container_name: ecom_appz_postgres
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: ecom_appz
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
