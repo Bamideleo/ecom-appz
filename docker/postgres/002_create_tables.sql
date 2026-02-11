@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS users(
     password TEXT NOT NULL,
     role VARCHAR(20) DEFAULT 'user',
     is_active BOOLEAN DEFAULT TRUE,
-    create_at TIMESTAMP DEFAULT NOW(),
+    created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
 );
 

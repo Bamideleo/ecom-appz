@@ -19,12 +19,14 @@ import (
 func main() {
 	cfg, err := config.SetupEnv()
 	 logger := logger.New()
-	
 	if err != nil{
 		log.Fatalf("config file is not loaded properly %v\n", err)
 	}
-
-	handler := router.New(logger)
+	db, err := db.StartServer(cfg)
+	if err != nil {
+	log.Fatalf("database connection failed: %v", err)
+	}
+	handler := router.New(logger, db)
 
 	server := &http.Server{
 		Addr:    cfg.AppPort,
@@ -57,5 +59,5 @@ func main() {
 	logger.Info("server exited cleanly")
 
 
-	db.StartServer(cfg)
+	
 }
