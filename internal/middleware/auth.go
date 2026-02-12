@@ -1,37 +1,36 @@
 package middleware
 
 import (
+	"context"
 	"ecom-appz/internal/auth"
 	"ecom-appz/internal/handlers"
 	"net/http"
 	"strings"
 )
 
-func Auth(requiredRole string) func(http.Handler) http.Handler{
-	return func(next http.Handler)http.Handler{
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request){
+type contextKey string
 
-			header :=r.Header.Get("Authorization")
+const UserContextKey contextKey = "user"
 
-			if header ==""{
-				handlers.RespondError(w, http.StatusUnauthorized, "missing token")
-				return
-			}
-			
-			token := strings.TrimPrefix(header, "Bearer")
-			claims, err := auth.ParseToken(token)
+func Auth(next http.Handler) http.Handler{
+	return  http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-			if err !=nil{
-				handlers.RespondError(w, http.StatusUnauthorized,"invalid token")
-				return 
-			}
+		header := r.Header.Get("Authorization")
+		if header == ""{
+			handlers.RespondError(w, http.StatusUnauthorized, "missing token")
+			return
+		}
 
-			if requiredRole != "" && claims.Role != requiredRole{
-				handlers.RespondError(w,http.StatusForbidden, "forbidden")
-				return
-			}
+		tokenString := strings.TrimPrefix(header, "Bearer")
 
-			next.ServeHTTP(w, r)
-		})
-	}
+		claims, err := auth.ParseToken(tokenString)
+
+		if err !=nil{
+			handlers.RespondError(w, http.StatusUnauthorized, "invalid token")
+			return 
+		}
+		// Inject into request context
+		ctx := context.WithValue(r.Context(), UserContextKey, claims)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
 }
