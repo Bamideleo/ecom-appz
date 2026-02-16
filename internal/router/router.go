@@ -17,6 +17,10 @@ func New(log *logger.Logger, db *sql.DB) http.Handler{
 	authHandler := &handlers.AuthHandler{
 		UserRepo: userRepo,
 	}
+
+	profileHandler := &handlers.ProfileHandler{
+		UserRepo: *userRepo,
+	}
 	// public routes
 	mux.HandleFunc("/health", handlers.Health)
 
@@ -59,15 +63,27 @@ v1.Handle(
 
 // User + Admin route
 v1.Handle(
-	"/orders",
+	"/profile",
+	Method(http.MethodPost,
 	middleware.Auth(
 		middleware.Authorize(models.RoleUser, models.RoleAdmin)(
 			// http.HandlerFunc(orderHandler.CreateOrder),
-			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.Write([]byte("user & admin access granted"))
-		}),
+			http.HandlerFunc(profileHandler.GetProfile),
 		),
 	),
+),
+)
+
+v1.Handle(
+	"/profile",
+	Method(http.MethodPost,
+	middleware.Auth(
+		middleware.Authorize(models.RoleUser, models.RoleAdmin)(
+			// http.HandlerFunc(orderHandler.CreateOrder),
+			http.HandlerFunc(profileHandler.UpdateProfile),
+		),
+	),
+),
 )
 
 	mux.Handle("/api/v1/", http.StripPrefix("/api/v1", v1))

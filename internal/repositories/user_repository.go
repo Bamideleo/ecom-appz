@@ -89,3 +89,14 @@ func (r * UserRepository) GetByID(ctx context.Context, id string) (*models.User,
 	return user, err
 }
 
+func (r *UserRepository) UpdateProfile(user *models.User) error{
+	query :=`UPDATE users
+	SET full_name = $1,
+	email = $2,
+	phone = $3
+	Updated_at = NOW()
+	WHERE id = $4`
+	_, err := r.db.Exec(query, user.Fullname, user.Phone, user.Email, user.ID)
+	return err
+}
+
