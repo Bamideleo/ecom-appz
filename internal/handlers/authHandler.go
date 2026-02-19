@@ -41,7 +41,9 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request){
 		return	
 	}
 
-	w.WriteHeader(http.StatusCreated)
+	utils.JSONResponse(w, map[string]string{
+		"message": "User registered successfully",
+	}, http.StatusCreated)
 }
 
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request){
@@ -54,11 +56,29 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request){
 		RespondError(w, http.StatusUnauthorized, "invalid credentials")
 		return
 	}
-	token, _ := auth.GenerateToken(user.ID, user.Role)
+	accessToken, _ := auth.GenerateToken(user.ID, user.Role)
 
-	json.NewEncoder(w).Encode(map[string]string{
-		"token":token,
+	refreshToken, exp, err := auth.GenerateRefreshToken(user.ID)
+	if err != nil {
+		utils.JSONError(w, "Could not generate refresh token", http.StatusInternalServerError)
+		return
+	}
+
+	err = h.RefreshRepo.Store(&models.RefreshToken{
+		UserId:    user.ID,
+		Token:     refreshToken,
+		ExpiresAt: exp,
+		CreatedAt: time.Now(),
 	})
+	if err != nil {
+		utils.JSONError(w, "Could not store refresh token", http.StatusInternalServerError)
+		return
+	}
+
+	utils.JSONResponse(w, map[string]string{
+		"access_token":  accessToken,
+		"refresh_token": refreshToken,
+	}, http.StatusOK)
 }
 
 
