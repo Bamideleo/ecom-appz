@@ -63,28 +63,23 @@ v1.Handle(
 
 // User + Admin route
 v1.Handle(
-	"/profile",
-	Method(http.MethodPost,
-	middleware.Auth(
-		middleware.Authorize(models.RoleUser, models.RoleAdmin)(
-			// http.HandlerFunc(orderHandler.CreateOrder),
-			http.HandlerFunc(profileHandler.GetProfile),
-		),
-	),
-),
+    "/profile",
+    middleware.Auth(
+        middleware.Authorize(models.RoleUser, models.RoleAdmin)(
+            http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+                switch r.Method {
+                case http.MethodGet:
+                    profileHandler.GetProfile(w, r)
+                case http.MethodPost:
+                    profileHandler.UpdateProfile(w, r)
+                default:
+                    http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+                }
+            }),
+        ),
+    ),
 )
 
-v1.Handle(
-	"/profile",
-	Method(http.MethodPost,
-	middleware.Auth(
-		middleware.Authorize(models.RoleUser, models.RoleAdmin)(
-			// http.HandlerFunc(orderHandler.CreateOrder),
-			http.HandlerFunc(profileHandler.UpdateProfile),
-		),
-	),
-),
-)
 
 	mux.Handle("/api/v1/", http.StripPrefix("/api/v1", v1))
 

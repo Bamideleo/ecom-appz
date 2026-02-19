@@ -1,15 +1,16 @@
 package middleware
 
 import (
-	"ecom-appz/internal/auth"
 	"ecom-appz/internal/handlers"
+	"ecom-appz/internal/helper"
 	"net/http"
 )
 
 func Authorize(requiredRoles ...string) func(http.Handler) http.Handler{
 	return func(next http.Handler) http.Handler{
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request){
-			claims, ok := r.Context().Value(UserContextKey).(*auth.Claims)
+			// claims, ok := r.Context().Value(UserContextKey).(*auth.Claims)
+			claims, ok := helper.GetUserClaims(r.Context())
 			if !ok {
 				handlers.RespondError(w, http.StatusUnauthorized, "unauthorized")
 				return

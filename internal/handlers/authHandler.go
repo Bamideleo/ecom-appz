@@ -5,12 +5,15 @@ import (
 	"ecom-appz/internal/auth"
 	"ecom-appz/internal/models"
 	"ecom-appz/internal/repositories"
+	"ecom-appz/internal/utils"
 	"encoding/json"
 	"net/http"
+	"time"
 )
 
 type AuthHandler struct {
 	UserRepo *repositories.UserRepository
+	RefreshRepo repositories.RefreshRepository
 }
 
 type AuthRequest struct{
@@ -56,4 +59,51 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request){
 	json.NewEncoder(w).Encode(map[string]string{
 		"token":token,
 	})
+}
+
+
+func(h *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request){
+	var body struct{
+		RefreshToken string `json:"refresh_token"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&body); err !=nil{
+		utils.JSONError(w,"Invalid request", http.StatusBadRequest)
+		return
+	}
+	storedToken, err := h.RefreshRepo.Find(body.RefreshToken)
+
+	if err != nil || storedToken.ExpiresAt.Before(time.Now()){
+		utils.JSONError(w, "Invalid refresh token", http.StatusUnauthorized)
+		return
+	}
+
+	user, err := h.UserRepo.GetByID(r.Context(),storedToken.UserId)
+
+	if err != nil{
+		utils.JSONError(w,"User not found", http.StatusUnauthorized)
+		return
+	}
+	newAccess, _:= auth.GenerateToken(user.ID, user.Role)
+
+	utils.JSONResponse(w, map[string]string{
+		"access_token":newAccess,
+	}, http.StatusOK)
+}
+
+func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request){
+	var body struct{
+		RefreshToken string `json:"refresh_token"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&body); err !=nil{
+		utils.JSONError(w, "Invalid request", http.StatusBadRequest)
+		return
+	}
+	h.RefreshRepo.Delete(body.RefreshToken)
+
+	utils.JSONResponse(w, map[string]string{
+		"message":"Logged out successfully",
+	}, http.StatusOK)
+	
 }

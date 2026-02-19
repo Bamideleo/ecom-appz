@@ -19,6 +19,13 @@ type User struct {
 }
 
 
+type UpdateProfileRequest struct {
+    Fullname string `json:"full_name"`
+    Email    string `json:"email"`
+    Phone    string `json:"phone"`
+}
+
+
 
 // HashPassword hashes a plain-text password
 

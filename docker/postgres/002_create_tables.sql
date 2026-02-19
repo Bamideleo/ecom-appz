@@ -13,6 +13,18 @@ CREATE TABLE IF NOT EXISTS users(
 );
 
 
+-- Refresh Token
+
+CREATE TABLE IF NOT EXISTS refresh_tokens (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL,
+    token VARCHAR(255) NOT NULL,
+    expires_at TIMESTAMP DEFAULT NOW()
+    created_at TIMESTAMP DEFAULT NOW(),
+    
+);
+
+
 --PRODUCTS TABLE
 
 CREATE TABLE IF NOT EXISTS products(
