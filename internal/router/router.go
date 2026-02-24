@@ -39,10 +39,22 @@ func New(log *logger.Logger, db *sql.DB) http.Handler{
 		http.HandlerFunc(authHandler.Register),
 		),
 	)
+
 	v1.Handle("/auth/login", Method(http.MethodPost,
 		http.HandlerFunc(authHandler.Login),
 	),
 )
+
+v1.Handle("/auth/refresh", Method(http.MethodPost,
+		http.HandlerFunc(authHandler.Refresh),
+	),
+)
+v1.Handle("/auth/logot", Method(http.MethodPost,
+		http.HandlerFunc(authHandler.Logout),
+	),
+)
+
+
 
 
 //Admin-only route
