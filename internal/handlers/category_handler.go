@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 type CategoryHandler struct {
@@ -31,7 +32,21 @@ func (h *CategoryHandler) Create(w http.ResponseWriter, r *http.Request){
 }
 
 func (h *CategoryHandler) Update(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.Atoi(chi.URLParam(r, "id"))
+	path := r.URL.Path
+	parts := strings.Split(path, "/")
+
+	if len(parts) < 3 {
+		http.Error(w, "Invalid URL", http.StatusBadRequest)
+		return
+	}
+
+	idStr := parts[2]
+
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "Invalid product ID", http.StatusBadRequest)
+		return
+	}
 	if err != nil {
 		utils.JSONError(w, "Invalid category ID", http.StatusBadRequest)
 		return
@@ -56,7 +71,21 @@ func (h *CategoryHandler) Update(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *CategoryHandler) Delete(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.Atoi(chi.URLParam(r, "id"))
+	path := r.URL.Path
+	parts := strings.Split(path, "/")
+
+	if len(parts) < 3 {
+		http.Error(w, "Invalid URL", http.StatusBadRequest)
+		return
+	}
+
+	idStr := parts[2]
+
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "Invalid product ID", http.StatusBadRequest)
+		return
+	}
 	if err != nil {
 		utils.JSONError(w, "Invalid category ID", http.StatusBadRequest)
 		return
@@ -74,13 +103,30 @@ func (h *CategoryHandler) Delete(w http.ResponseWriter, r *http.Request) {
 
 
 func (h *CategoryHandler) DetachProduct(w http.ResponseWriter, r *http.Request) {
-	categoryID, err := strconv.Atoi(chi.URLParam(r, "id"))
+	path := r.URL.Path
+	parts := strings.Split(path, "/")
+
+	if len(parts) < 3 {
+		http.Error(w, "Invalid URL", http.StatusBadRequest)
+		return
+	}
+
+	idStr := parts[2]
+
+	categoryID, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "Invalid product ID", http.StatusBadRequest)
+		return
+	}
 	if err != nil {
 		utils.JSONError(w, "Invalid category ID", http.StatusBadRequest)
 		return
 	}
 
-	productID, err := strconv.Atoi(chi.URLParam(r, "productID"))
+	
+
+	// productID, err := strconv.Atoi(chi.URLParam(r, "productID"))
+	productID, err := strconv.Atoi(idStr)
 	if err != nil {
 		utils.JSONError(w, "Invalid product ID", http.StatusBadRequest)
 		return
@@ -97,8 +143,17 @@ func (h *CategoryHandler) DetachProduct(w http.ResponseWriter, r *http.Request) 
 }
 
 func (h *CategoryHandler) AttachProduct(w http.ResponseWriter, r *http.Request){
-	categoryID, _ := strconv.Atoi(chi.URLParam(r, "id"))
-	productID, _ := strconv.Atoi(chi.URLParam(r, "productID"))
+	path := r.URL.Path
+	parts := strings.Split(path, "/")
+
+	if len(parts) < 3 {
+		http.Error(w, "Invalid URL", http.StatusBadRequest)
+		return
+	}
+
+	idStr := parts[2]
+	categoryID, _ := strconv.Atoi(idStr)
+	productID, _ := strconv.Atoi(idStr)
 
 	if err := h.Repo.AttachProduct(categoryID, productID); err !=nil{
 		utils.JSONError(w, "Could not attach product", http.StatusInternalServerError)
