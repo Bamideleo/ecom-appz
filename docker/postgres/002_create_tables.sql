@@ -73,3 +73,17 @@ CREATE TABLE IF NOT EXISTS order_items(
         FOREIGN KEY (product_id)
         REFERENCES products(id)
 )
+
+
+CREATE TABLE categories(
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL UNIQUE,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW(),
+);
+
+CREATE TABLE product_categories(
+    product_is INT REFERENCE products(id) ON DELETE CASECADE,
+    category_id INT REFERENCE categories(id) ON DELETE CASECADE,
+    PRIMARY KEY (product_id, category_id)
+)

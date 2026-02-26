@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 type ProductHandler struct {
@@ -43,9 +44,22 @@ func (h *ProductHandler) GetAll(w http.ResponseWriter, r *http.Request){
 }
 
 func (h *ProductHandler) GetByID(w http.ResponseWriter, r *http.Request){
-	id, _ :=strconv.Atoi(chi.URLParam(r, "id"))
+	path := r.URL.Path
+	parts := strings.Split(path, "/")
 
-	product, err := h.Repo.FindAll(id)
+	if len(parts) < 3 {
+		http.Error(w, "Invalid URL", http.StatusBadRequest)
+		return
+	}
+
+	idStr := parts[2]
+
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "Invalid product ID", http.StatusBadRequest)
+		return
+	}
+	product, err := h.Repo.FindByID(id)
 	if err != nil{
 		utils.JSONError(w, "Product not found", http.StatusNotFound)
 	}
@@ -54,7 +68,21 @@ func (h *ProductHandler) GetByID(w http.ResponseWriter, r *http.Request){
 }
 
 func (h *ProductHandler) Update(w http.ResponseWriter, r *http.Request){
-	id, _ :=strconv.Atoi(chi. URLParam(r, "id"))
+	path := r.URL.Path
+	parts := strings.Split(path, "/")
+
+	if len(parts) < 3 {
+		http.Error(w, "Invalid URL", http.StatusBadRequest)
+		return
+	}
+
+	idStr := parts[2]
+
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "Invalid product ID", http.StatusBadRequest)
+		return
+	}
 
 	var product models.Product
 	if err :=json.NewDecoder(r.Body).Decode(&product); err !=nil{
@@ -74,7 +102,21 @@ func (h *ProductHandler) Update(w http.ResponseWriter, r *http.Request){
 
 
 func (h *ProductHandler)Delete(w http.ResponseWriter, r *http.Request){
-	id, _ :=strconv.Atoi(chi. URLParam(r, "id"))
+	path := r.URL.Path
+	parts := strings.Split(path, "/")
+
+	if len(parts) < 3 {
+		http.Error(w, "Invalid URL", http.StatusBadRequest)
+		return
+	}
+
+	idStr := parts[2]
+
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "Invalid product ID", http.StatusBadRequest)
+		return
+	}
 	if err := h.Repo.Delete(id); err !=nil{
 		utils.JSONError(w, "Could not delete product", http.StatusInternalServerError)
 		return

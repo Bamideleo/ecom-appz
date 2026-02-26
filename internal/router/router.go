@@ -21,6 +21,11 @@ func New(log *logger.Logger, db *sql.DB) http.Handler{
 	profileHandler := &handlers.ProfileHandler{
 		UserRepo: *userRepo,
 	}
+
+	product := repositories.NewProductRepository(db)
+	productHandler := &handlers.ProductHandler{
+		Repo: product,
+	}
 	// public routes
 	mux.HandleFunc("/health", handlers.Health)
 
@@ -49,8 +54,17 @@ v1.Handle("/auth/refresh", Method(http.MethodPost,
 		http.HandlerFunc(authHandler.Refresh),
 	),
 )
-v1.Handle("/auth/logot", Method(http.MethodPost,
+v1.Handle("/auth/logout", Method(http.MethodPost,
 		http.HandlerFunc(authHandler.Logout),
+	),
+)
+v1.Handle("/products", Method(http.MethodPost,
+		http.HandlerFunc(productHandler.GetAll),
+	),
+)
+
+v1.Handle("/products/{id}", Method(http.MethodPost,
+		http.HandlerFunc(productHandler.GetByID),
 	),
 )
 
@@ -63,15 +77,33 @@ v1.Handle(
 	Method(http.MethodPost,
 		middleware.Auth(
 			middleware.Authorize(models.RoleAdmin)(
-				// http.HandlerFunc(productHandler.CreateProduct),
-				http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.Write([]byte("admin access granted"))
-		}),
+				Method(http.MethodPost, http.HandlerFunc(productHandler.Create)),
 			),
 		),
 	),
 )
 
+v1.Handle(
+	"/products/update/{id}",
+	Method(http.MethodPost,
+		middleware.Auth(
+			middleware.Authorize(models.RoleAdmin)(
+				Method(http.MethodPost, http.HandlerFunc(productHandler.Update)),
+			),
+		),
+	),
+)
+
+v1.Handle(
+	"/products/delete/{id}",
+	Method(http.MethodPost,
+		middleware.Auth(
+			middleware.Authorize(models.RoleAdmin)(
+				Method(http.MethodPost, http.HandlerFunc(productHandler.Delete)),
+			),
+		),
+	),
+)
 
 // User + Admin route
 v1.Handle(
@@ -104,16 +136,6 @@ v1.Handle(
 
 	return handler
 }
-
-// func Method(method string, h http.HandlerFunc) http.HandlerFunc {
-// 	return func(w http.ResponseWriter, r *http.Request) {
-// 		if r.Method != method {
-// 			handlers.RespondError(w, http.StatusMethodNotAllowed, "method not allowed")
-// 			return
-// 		}
-// 		h(w, r)
-// 	}
-// }
 
 
 func Method(method string, next http.Handler) http.Handler {
