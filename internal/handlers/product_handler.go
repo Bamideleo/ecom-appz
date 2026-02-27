@@ -20,16 +20,39 @@ func NewProductHandler(repo repositories.ProductRepository) *ProductHandler{
 }
 
 func (h *ProductHandler) Create(w http.ResponseWriter, r *http.Request){
-	var product models.Product
-	if err := json.NewDecoder(r.Body).Decode(&product); err !=nil{
-		utils.JSONError(w, "Invalid request body", http.StatusBadRequest)
-		return
-	}
-	if err := h.Repo.Create(&product); err !=nil{
-		utils.JSONError(w, "Could not create product", http.StatusInternalServerError)
+	
+	err := r.ParseMultipartForm(10 << 20)
+	if err != nil{
+		utils.JSONError(w, "Could not parse form", http.StatusBadRequest)
 		return
 	}
 
+	price, _ := strconv.ParseFloat(r.FormValue("price"), 64)
+	stock, _ := strconv.Atoi(r.FormValue("stock"))
+
+	product := models.Product{
+		Name: r.FormValue("name"),
+		Description: r.FormValue("description"),
+		Price: price,
+		Stock: stock,
+	}
+
+	file, header, err := r.FormFile("image")
+
+	if err == nil{
+		imagePath, err := utils.SaveProductImage(file, header)
+		if err != nil{
+			utils.JSONError(w, "Could not save image", http.StatusInternalServerError)
+			return
+		}
+		product.ImageURL = imagePath
+	}
+	
+	if err := h.Repo.Create(&product); err != nil{
+		utils.JSONError(w, "Could not create product", http.StatusInternalServerError)
+		return
+	}
+	
 	utils.JSONResponse(w, product, http.StatusCreated)
 }
 
@@ -84,12 +107,33 @@ func (h *ProductHandler) Update(w http.ResponseWriter, r *http.Request){
 		return
 	}
 
-	var product models.Product
-	if err :=json.NewDecoder(r.Body).Decode(&product); err !=nil{
-		utils.JSONError(w, "Invalid request", http.StatusBadRequest)
+	err = r.ParseMultipartForm(10 << 20)
+
+	if err != nil{
+		utils.JSONError(w, "Invalid form", http.StatusBadRequest)
 		return
 	}
-	product.ID = id
+
+	price, _ := strconv.ParseFloat(r.FormValue("price"), 64)
+	stock, _ := strconv.Atoi(r.FormValue("stock"))
+
+	product := models.Product{
+		ID: id,
+		Name: r.FormValue("name"),
+		Description: r.FormValue("description"),
+		Price: price,
+		Stock: stock,
+	}
+	file, header, err := r.FormFile("image")
+	if err == nil{
+		imagePath, err := utils.SaveProductImage(file, header)
+		if err != nil{
+			utils.JSONError(w, "Could not save image", http.StatusInternalServerError)
+			return
+		}
+		product.ImageURL = imagePath
+	}
+
 	if err := h.Repo.Update(&product); err != nil{
 		utils.JSONError(w, "Could not update product", http.StatusInternalServerError)
 		return

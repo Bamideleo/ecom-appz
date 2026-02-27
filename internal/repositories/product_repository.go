@@ -24,7 +24,7 @@ func NewProductRepository(db *sql.DB) ProductRepository{
 
 func (r *productRepository) Create(product *models.Product) error  {
 	query :=`INSERT INTO products(name, description, price, stock)
-	VALUES ($1, $2, $3, $4)
+	VALUES ($1, $2, $3, $4, $5)
 	RETURNING id, created_at, updated_at
 	`
 	return r.DB.QueryRow(
@@ -33,6 +33,7 @@ func (r *productRepository) Create(product *models.Product) error  {
 		product.Description,
 		product.Price,
 		product.Stock,
+		product.ImageURL,
 	).Scan(&product.ID, &product.CreatedAt, &product.UpdatedAt)
 } 
 
@@ -54,6 +55,7 @@ func (r *productRepository) FindAll()([]models.Product, error){
 			&p.Description,
 			&p.Price,
 			&p.Stock,
+			&p.ImageURL,
 			&p.CreatedAt,
 			&p.UpdatedAt,
 		); err !=nil{
@@ -76,6 +78,7 @@ func (r *productRepository) FindByID(id int)(*models.Product, error){
 		&p.Description,
 		&p.Price,
 		&p.Stock,
+		&p.ImageURL,
 		&p.CreatedAt,
 		&p.UpdatedAt,
 	)
@@ -94,6 +97,7 @@ func (r *productRepository) Update(product *models.Product)error{
 		product.Description,
 		product.Price,
 		product.Stock,
+		product.ImageURL,
 		product.ID,
 	)
 

@@ -18,6 +18,17 @@ func NewCategoryHandler(repo repositories.CategoryRepository) *CategoryHandler{
 	return &CategoryHandler{Repo: repo}
 }
 
+
+func (h *CategoryHandler) GetAll(w http.ResponseWriter, r *http.Request){
+	category, err := h.Repo.FindAll()
+
+	if err != nil{
+		utils.JSONError(w, "Could not fetch products", http.StatusInternalServerError)
+		return
+	}
+	utils.JSONResponse(w, category, http.StatusOK)
+}
+
 func (h *CategoryHandler) Create(w http.ResponseWriter, r *http.Request){
 	var category models.Category
 	if err:= json.NewDecoder(r.Body).Decode(&category); err != nil{

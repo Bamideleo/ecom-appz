@@ -26,6 +26,10 @@ func New(log *logger.Logger, db *sql.DB) http.Handler{
 	productHandler := &handlers.ProductHandler{
 		Repo: product,
 	}
+	category := repositories.NewCategoryRepository(db)
+	categoryHandler := &handlers.CategoryHandler{
+		Repo: category,
+	}
 	// public routes
 	mux.HandleFunc("/health", handlers.Health)
 
@@ -68,10 +72,14 @@ v1.Handle("/products/{id}", Method(http.MethodPost,
 	),
 )
 
-
+v1.Handle("/category", Method(http.MethodPost,
+		http.HandlerFunc(categoryHandler.GetAll),
+	),
+)
 
 
 //Admin-only route
+// product section
 v1.Handle(
 	"/products/create",
 	Method(http.MethodPost,
@@ -104,6 +112,67 @@ v1.Handle(
 		),
 	),
 )
+
+// categories section
+v1.Handle(
+	"/category/create",
+	Method(http.MethodPost,
+		middleware.Auth(
+			middleware.Authorize(models.RoleAdmin)(
+				Method(http.MethodPost, http.HandlerFunc(categoryHandler.Create)),
+			),
+		),
+	),
+)
+
+v1.Handle(
+	"/category/update/{id}",
+	Method(http.MethodPost,
+		middleware.Auth(
+			middleware.Authorize(models.RoleAdmin)(
+				Method(http.MethodPost, http.HandlerFunc(categoryHandler.Update)),
+			),
+		),
+	),
+)
+
+v1.Handle(
+	"/category/delete/{id}",
+	Method(http.MethodPost,
+		middleware.Auth(
+			middleware.Authorize(models.RoleAdmin)(
+				Method(http.MethodPost, http.HandlerFunc(categoryHandler.Delete)),
+			),
+		),
+	),
+)
+
+v1.Handle(
+	"/category/attach/{productID}",
+	Method(http.MethodPost,
+		middleware.Auth(
+			middleware.Authorize(models.RoleAdmin)(
+				Method(http.MethodPost, http.HandlerFunc(categoryHandler.AttachProduct)),
+			),
+		),
+	),
+)
+
+v1.Handle(
+	"/category/detach/{productID}",
+	Method(http.MethodPost,
+		middleware.Auth(
+			middleware.Authorize(models.RoleAdmin)(
+				Method(http.MethodPost, http.HandlerFunc(categoryHandler.DetachProduct)),
+			),
+		),
+	),
+)
+
+
+
+
+// End only admin
 
 // User + Admin route
 v1.Handle(

@@ -38,6 +38,9 @@ CREATE TABLE IF NOT EXISTS products(
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
+ALTER TABLE products
+ADD COLUMN image_url TEXT;
+
 -- ORDERS TABLE
 
 CREATE TABLE IF NOT EXISTS orders(
