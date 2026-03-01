@@ -4,7 +4,6 @@ import (
 	"ecom-appz/internal/models"
 	"ecom-appz/internal/repositories"
 	"ecom-appz/internal/utils"
-	"encoding/json"
 	"net/http"
 	"strconv"
 	"strings"
@@ -168,4 +167,35 @@ func (h *ProductHandler)Delete(w http.ResponseWriter, r *http.Request){
 	utils.JSONResponse(w, map[string]string{
 		"message":"Product deleted",
 	}, http.StatusOK)
+}
+
+func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request){
+	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
+	limit, _:= strconv.Atoi(r.URL.Query().Get("limit"))
+
+	if page <= 0{
+		page =1
+	}
+	if limit <= 0 || limit > 100{
+		limit =10
+	}
+	sort := r.URL.Query().Get("sort")
+	order := r.URL.Query().Get("order")
+	search :=r.URL.Query().Get("search")
+
+	products, total, err := h.Repo.List(page, limit, sort, order, search)
+	if err != nil{
+		utils.JSONError(w, "Could not fetch products", http.StatusInternalServerError)
+		return
+	}
+	response := map[string]interface{}{
+		"data":products,
+		"meta":map[string]interface{}{
+			"page":page,
+			"limit":limit,
+			"total":total,
+			"pages": (total + limit - 1) / limit,
+		},
+	}
+	utils.JSONResponse(w, response, http.StatusOK)
 }

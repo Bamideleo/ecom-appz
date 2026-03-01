@@ -62,17 +62,22 @@ v1.Handle("/auth/logout", Method(http.MethodPost,
 		http.HandlerFunc(authHandler.Logout),
 	),
 )
-v1.Handle("/products", Method(http.MethodPost,
+v1.Handle("/products", Method(http.MethodGet,
 		http.HandlerFunc(productHandler.GetAll),
 	),
 )
 
-v1.Handle("/products/{id}", Method(http.MethodPost,
+v1.Handle("/product/{id}", Method(http.MethodGet,
 		http.HandlerFunc(productHandler.GetByID),
 	),
 )
 
-v1.Handle("/category", Method(http.MethodPost,
+v1.Handle("/products/list", Method(http.MethodGet,
+		http.HandlerFunc(productHandler.List),
+	),
+)
+
+v1.Handle("/category", Method(http.MethodGet,
 		http.HandlerFunc(categoryHandler.GetAll),
 	),
 )

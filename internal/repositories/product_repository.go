@@ -11,6 +11,7 @@ type ProductRepository interface {
 	FindByID(id int)(*models.Product, error)
 	Update(product *models.Product)error
 	Delete(id int)error
+	List(page, limit int, sort, order, search string) ([]models.Product, int, error)
 }
 
 
@@ -108,4 +109,62 @@ func(r *productRepository) Delete(id int) error{
 	_, err := r.DB.Exec("DELETE FROM products WHERE id=$1", id)
 	return err
 }
+
+func (r *productRepository) List(page, limit int, sort, order, search string) ([]models.Product, int, error){
+offset := (page -1) * limit
+// Basic validation to prevent SQl injection
+allowedSort :=map[string]bool{
+	"name": true,
+	"price": true,
+	"created_at":true,
+}
+if !allowedSort[sort]{
+	sort = "created_at"
+}
+	if order != "asc"{
+		order ="desc"
+	}
+
+	baseQuery :=`
+	FROM products WHERE ($1 = '' OR name ILIKE '%' || $1 || '%')
+	`
+	// Count total
+	var total int
+	countQuery := "SELECT COUNT(*)" + baseQuery
+	err := r.DB.QueryRow(countQuery, search).Scan(&total)
+	if err !=nil{
+		return nil, 0, err
+	}
+
+	query :=`
+	SELECT id, name, description, price, stock, image_url, created_at, updated_at
+	` + baseQuery + `ORDER BY` + sort + ` ` + order + `
+	LIMIT $2 OFFSET $3
+	`
+	rows, err := r.DB.Query(query, search, limit, offset)
+	if err != nil{
+		return nil, 0, err
+	}
+	defer rows.Close()
+	var products []models.Product
+	for rows.Next(){
+		var p models.Product
+		if err := rows.Scan(
+			&p.ID,
+			&p.Name,
+			&p.Description,
+			&p.Price,
+			&p.Stock,
+			&p.ImageURL,
+			&p.CreatedAt,
+			&p.UpdatedAt,
+		); err != nil{
+			return  nil, 0, err
+		}
+		products = append(products, p)
+	}
+
+	return products, total, nil
+}
+
 
