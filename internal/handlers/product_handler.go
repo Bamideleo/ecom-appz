@@ -199,3 +199,38 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request){
 	}
 	utils.JSONResponse(w, response, http.StatusOK)
 }
+
+func (h *ProductHandler) GetDetails(w http.ResponseWriter, r *http.Request){
+		path := r.URL.Path
+	parts := strings.Split(path, "/")
+
+	if len(parts) < 3 {
+		http.Error(w, "Invalid URL", http.StatusBadRequest)
+		return
+	}
+
+	idStr := parts[2]
+
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "Invalid product ID", http.StatusBadRequest)
+		return
+	}
+
+	product, err :=h.Repo.FindWithDetails(id)
+	if err != nil{
+		utils.JSONError(w, "Product not found", http.StatusNotFound)
+		return
+	}
+	response := map[string]interface{}{
+		"product": product,
+		"stock_status": func() string{
+			if product.Stock > 0 {
+				return "in_stock"
+			}
+			return "out_of_stock"
+		}(),
+	}
+
+	utils.JSONResponse(w, response, http.StatusOK)
+}

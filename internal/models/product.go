@@ -9,6 +9,7 @@ type Product struct {
 	Price       float64 `json:"price"`
 	Stock       int     `json:"stock"`
 	ImageURL    string    `json:"image_url"`
+	Categories []Category `json:"categories,omitempty"`
 	IsActive  bool      `json:"is_active"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`

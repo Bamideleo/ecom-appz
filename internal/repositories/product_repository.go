@@ -3,6 +3,7 @@ package repositories
 import (
 	"database/sql"
 	"ecom-appz/internal/models"
+	"errors"
 )
 
 type ProductRepository interface {
@@ -12,6 +13,8 @@ type ProductRepository interface {
 	Update(product *models.Product)error
 	Delete(id int)error
 	List(page, limit int, sort, order, search string) ([]models.Product, int, error)
+	FindWithDetails(id int)(*models.Product, error)
+	DeductStock(productID, quantity int) error
 }
 
 
@@ -167,4 +170,62 @@ if !allowedSort[sort]{
 	return products, total, nil
 }
 
+func (r *productRepository) FindWithDetails(id int) (*models.Product, error){
+	var product models.Product
+	query :=`
+	SELECT id, name, description, price, stock, image_url, created_at, 
+	updated_at FROM products
+	WHERE id = $1
+	` 
+	err := r.DB.QueryRow(query, id).Scan(
+		&product.ID,
+		&product.Name,
+		&product.Description,
+		&product.Price,
+		&product.Stock,
+		&product.ImageURL,
+		&product.CreatedAt,
+		&product.UpdatedAt,
+	)
+	// Load categories
+	rows, err := r.DB.Query(`
+	SELECT c.id, c.name, c.created_at, c.update_at
+	FROM categories c
+	JOIN product_categories pc ON c.id = pc.category_id
+	WHERE pc.product_id = $1
+	`, id)
+	if err != nil{
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next(){
+		var c models.Category
+		if err:= rows.Scan(&c.ID, &c.Name, &c.CreatedAt, &c.UpdatedAt); err !=nil{
+			return nil, err
+		}
+		product.Categories = append(product.Categories, c)
+	}
+	return &product, nil
+}
+
+func (r *productRepository) DeductStock(productID, quantity int)error{
+	query := `
+	UPDATE products
+	SET stock = stock -$1
+	WHERE id = $2 AND stock >= $1
+	`
+
+	result, err := r.DB.Exec(query, quantity, productID)
+	if err != nil{
+		return  err
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil{
+		return err
+	}
+	if rowsAffected == 0{
+		return  errors.New("out of stock")
+	}
+	return nil
+}
 
