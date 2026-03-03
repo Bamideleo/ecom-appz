@@ -7,7 +7,9 @@ import (
 	"ecom-appz/internal/middleware"
 	"ecom-appz/internal/models"
 	"ecom-appz/internal/repositories"
+	"ecom-appz/internal/utils"
 	"net/http"
+	"time"
 )
 
 func New(log *logger.Logger, db *sql.DB) http.Handler{
@@ -21,10 +23,11 @@ func New(log *logger.Logger, db *sql.DB) http.Handler{
 	profileHandler := &handlers.ProfileHandler{
 		UserRepo: *userRepo,
 	}
-
+	cache := utils.NewInMemoryCache(5 *time.Minute)
 	product := repositories.NewProductRepository(db)
 	productHandler := &handlers.ProductHandler{
 		Repo: product,
+		Cache: cache,
 	}
 	category := repositories.NewCategoryRepository(db)
 	categoryHandler := &handlers.CategoryHandler{

@@ -11,6 +11,7 @@ import (
 
 type ProductHandler struct {
 	Repo repositories.ProductRepository
+	Cache *utils.InMemoryCache
 }
 
 
@@ -137,6 +138,7 @@ func (h *ProductHandler) Update(w http.ResponseWriter, r *http.Request){
 		utils.JSONError(w, "Could not update product", http.StatusInternalServerError)
 		return
 	}
+	h.Cache.Delete("product:" + strconv.Itoa(product.ID))
 	utils.JSONResponse(w, map[string]string{
 		"message": "Product update",
 	
@@ -164,6 +166,7 @@ func (h *ProductHandler)Delete(w http.ResponseWriter, r *http.Request){
 		utils.JSONError(w, "Could not delete product", http.StatusInternalServerError)
 		return
 	}
+	h.Cache.Delete("product:" + strconv.Itoa(id))
 	utils.JSONResponse(w, map[string]string{
 		"message":"Product deleted",
 	}, http.StatusOK)
@@ -216,12 +219,20 @@ func (h *ProductHandler) GetDetails(w http.ResponseWriter, r *http.Request){
 		http.Error(w, "Invalid product ID", http.StatusBadRequest)
 		return
 	}
+	cacheKey := "product:" + idStr
+	// Check cache
+	if cached, found := h.Cache.Get(cacheKey);found{
+		utils.JSONResponse(w, cached, http.StatusOK)
+		return
+	}
 
 	product, err :=h.Repo.FindWithDetails(id)
 	if err != nil{
 		utils.JSONError(w, "Product not found", http.StatusNotFound)
 		return
 	}
+
+	h.Cache.Set(cacheKey, product)
 	response := map[string]interface{}{
 		"product": product,
 		"stock_status": func() string{
