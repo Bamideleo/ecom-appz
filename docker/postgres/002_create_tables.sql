@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
 --PRODUCTS TABLE
 
 CREATE TABLE IF NOT EXISTS products(
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     description TEXT,
     price NUMERIC(10,2) NOT NULL,
@@ -44,7 +44,7 @@ ADD COLUMN image_url TEXT;
 -- ORDERS TABLE
 
 CREATE TABLE IF NOT EXISTS orders(
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id SERIAL PRIMARY KEY,
     user_id UUID NOT NULL,
     status VARCHAR(20) DEFAULT 'pending',
     total_amount NUMERIC(10,2) NOT NULL,
@@ -62,8 +62,8 @@ CREATE TABLE IF NOT EXISTS orders(
 
 CREATE TABLE IF NOT EXISTS order_items(
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    order_id UUID NOT NULL,
-    product_id UUID NOT NULL,
+    order_id INT NOT NULL,
+    product_id INT NOT NULL,
     quantity INT NOT NULL CHECK (quantity > 0),
     price NUMERIC(10,2) NOT NULL,
 
@@ -90,3 +90,17 @@ CREATE TABLE product_categories(
     category_id INT REFERENCE categories(id) ON DELETE CASECADE,
     PRIMARY KEY (product_id, category_id)
 )
+-- Cart tables
+CREATE TABLE carts(
+   id SERIAL PRIMARY KEY,
+   user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASECADE,
+   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE cart_items(
+    id SERIAL PRIMARY KEY,
+    cart_id INTEGER NOT NULL REFERENCE carts(id)ON DELETE CASCADE,
+    product_id INTEGER NOT NULL  REFERENCE products(id),
+    quantity INTEGER NOT NULL CHECK (quantity > 0),
+    UNIQUE(cart_id, product_id)
+);

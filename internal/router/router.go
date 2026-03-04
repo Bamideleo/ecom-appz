@@ -33,6 +33,10 @@ func New(log *logger.Logger, db *sql.DB) http.Handler{
 	categoryHandler := &handlers.CategoryHandler{
 		Repo: category,
 	}
+	cart := repositories.NewCartRepository(db)
+	cartHandler := &handlers.CartHandler{
+		Repo: cart,
+	}
 	// public routes
 	mux.HandleFunc("/health", handlers.Health)
 
@@ -201,6 +205,34 @@ v1.Handle(
     ),
 )
 
+// cart section
+v1.Handle(
+	"/add",
+	Method(http.MethodPost,
+		middleware.Auth(
+				Method(http.MethodPost, http.HandlerFunc(cartHandler.AddToCart)),
+		),
+	),
+)
+
+
+v1.Handle(
+	"/update",
+	Method(http.MethodPut,
+		middleware.Auth(
+				Method(http.MethodPost, http.HandlerFunc(cartHandler.UpdateQuantity)),
+		),
+	),
+)
+
+v1.Handle(
+	"/remove/{product_id}",
+	Method(http.MethodPut,
+		middleware.Auth(
+				Method(http.MethodPost, http.HandlerFunc(cartHandler.RemoveItem)),
+		),
+	),
+)
 
 	mux.Handle("/api/v1/", http.StripPrefix("/api/v1", v1))
 
