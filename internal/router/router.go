@@ -207,7 +207,7 @@ v1.Handle(
 
 // cart section
 v1.Handle(
-	"/add",
+	"/cart/add",
 	Method(http.MethodPost,
 		middleware.Auth(
 				Method(http.MethodPost, http.HandlerFunc(cartHandler.AddToCart)),
@@ -217,7 +217,7 @@ v1.Handle(
 
 
 v1.Handle(
-	"/update",
+	"/cart/update",
 	Method(http.MethodPut,
 		middleware.Auth(
 				Method(http.MethodPost, http.HandlerFunc(cartHandler.UpdateQuantity)),
@@ -226,7 +226,7 @@ v1.Handle(
 )
 
 v1.Handle(
-	"/remove/{product_id}",
+	"/cart/remove/{product_id}",
 	Method(http.MethodPut,
 		middleware.Auth(
 				Method(http.MethodPost, http.HandlerFunc(cartHandler.RemoveItem)),
