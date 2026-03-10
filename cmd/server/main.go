@@ -5,8 +5,6 @@ import (
 	"ecom-appz/internal/config"
 	"ecom-appz/internal/db"
 	"ecom-appz/internal/logger"
-	_ "ecom-appz/internal/logger"
-	_ "ecom-appz/internal/middleware"
 	"ecom-appz/internal/router"
 	"log"
 	"net/http"
