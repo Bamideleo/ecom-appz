@@ -5,7 +5,7 @@ import "time"
 type Order struct {
 	ID          int         `json:"id"`
 	UserID      string        `json:"user_id"`
-	Status      string      `json:"status"`
+	Status      OrderStatus      `json:"status"`
 	TotalAmount float64     `json:"total_amount"`
 	Items       []OrderItem `json:"item,omitempty"`
 	CreateAt    time.Time   `json:"created_at"`

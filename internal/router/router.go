@@ -37,6 +37,10 @@ func New(log *logger.Logger, db *sql.DB) http.Handler{
 	cartHandler := &handlers.CartHandler{
 		Repo: cart,
 	}
+	order :=repositories.NewOrdeRepository(db)
+	orderHandler := &handlers.OrderHandler{
+		Repo: order,
+	}
 	// checkOut:= repositories.NewCartRepository(db)
 	// checkoutHandler:= &handlers.CheckoutHandler{
 	// 	Rep
@@ -185,7 +189,16 @@ v1.Handle(
 	),
 )
 
-
+v1.Handle(
+	"/orders/{id}/status",
+	Method(http.MethodPut,
+		middleware.Auth(
+			middleware.Authorize(models.RoleAdmin)(
+				Method(http.MethodPut, http.HandlerFunc(orderHandler.UpdateStatus)),
+			),
+		),
+	),
+)
 
 
 // End only admin

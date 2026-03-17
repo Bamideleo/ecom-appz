@@ -10,6 +10,7 @@ type OrderRepository interface {
 	AddOrderItems(oderID int, items []models.OrderItem)error
 	GetByID(orderID int) (*models.Order, error)
 	GetUserOrders(userId string) ([]models.Order, error)
+	UpdateStatus(orderID int, status models.OrderStatus) error
 }
 
 
@@ -18,7 +19,7 @@ type orderRepository struct{
 }
 
 
-func NewORdeRepository(db *sql.DB)OrderRepository{
+func NewOrdeRepository(db *sql.DB)OrderRepository{
 	return  &orderRepository{DB: db}
 }
 
@@ -169,5 +170,15 @@ func (r* orderRepository) getOrderItems(orderID int) ([]models.OrderItem, error)
 		items = append(items, item)
 	}
 	return items, nil
+}
+
+func (r *orderRepository) UpdateStatus(orderID int, status models.OrderStatus) error{
+	_, err := r.DB.Exec(`
+	UPDATE orders
+	SET status = $1, update_at = NOW()
+	WHERE id = $2
+	`, status, orderID)
+
+	return err
 }
 
