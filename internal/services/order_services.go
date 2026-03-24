@@ -25,3 +25,15 @@ func(s *OrderService) UpdateOrderStatus(orderID int, newStatus models.OrderStatu
 	}
 	return s.Repo.UpdateStatus(orderID, newStatus)
 }
+
+func (s *OrderService) GetUserOrders(userID string) ([]models.Order, error) {
+	return s.Repo.GetUserOrders(userID)
+}
+
+func (s *OrderService) GetOrder(orderID int) (*models.Order, error) {
+	return s.Repo.GetByID(orderID)
+}
+
+func (s *OrderService) GetAllOrders() ([]models.Order, error) {
+	return s.Repo.GetAll()
+}

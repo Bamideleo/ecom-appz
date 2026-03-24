@@ -15,6 +15,8 @@ type ProductRepository interface {
 	List(page, limit int, sort, order, search string) ([]models.Product, int, error)
 	FindWithDetails(id int)(*models.Product, error)
 	DeductStock(productID, quantity int) error
+	// FindByIDTx(tx *sql.Tx, id int)(*models.Product, error)
+	DeductStockTx(tx *sql.Tx, productID, qty int) error
 }
 
 
@@ -228,4 +230,11 @@ func (r *productRepository) DeductStock(productID, quantity int)error{
 	}
 	return nil
 }
-
+func (r *productRepository) DeductStockTx(tx *sql.Tx, productID, qty int) error{
+	_, err := tx.Exec(`
+	UPDATE products
+	SET stock = stock - $1
+	WHERE id = $2 AND stock >= $1
+	`, qty, productID)
+	return err
+}

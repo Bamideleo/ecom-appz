@@ -11,6 +11,10 @@ type OrderRepository interface {
 	GetByID(orderID int) (*models.Order, error)
 	GetUserOrders(userId string) ([]models.Order, error)
 	UpdateStatus(orderID int, status models.OrderStatus) error
+	CreateTx(tx *sql.Tx, order *models.Order)(int, error)
+	AddOrderItemsTx(tx *sql.Tx, orderID int, items []models.OrderItem) error
+	GetAll() ([]models.Order, error)
+	
 }
 
 
@@ -23,6 +27,36 @@ func NewOrdeRepository(db *sql.DB)OrderRepository{
 	return  &orderRepository{DB: db}
 }
 
+func (r *orderRepository) GetAll() ([]models.Order, error){
+	rows, err := r.DB.Query(`
+	SELECT id, user_id, status, total_amount, created_at, update_at
+	FROM orders
+	ORDER BY created_at DESC
+	`)
+	if err != nil{
+		return  nil, err
+	}
+	defer rows.Close()
+
+	var orders []models.Order
+	for rows.Next(){
+		var order models.Order
+
+		err := rows.Scan(
+			&order.ID,
+			&order.UserID,
+			&order.Status,
+			&order.TotalAmount,
+			&order.CreateAt,
+			&order.UpdatedAt,
+		)
+		if err != nil{
+			return nil, err
+		}
+		orders = append(orders, order)
+	}
+	return orders, nil
+}
 func (r *orderRepository) Create(order *models.Order)(int, error){
 	var orderID int
 	err := r.DB.QueryRow(`
@@ -180,5 +214,28 @@ func (r *orderRepository) UpdateStatus(orderID int, status models.OrderStatus) e
 	`, status, orderID)
 
 	return err
+}
+
+func (r *orderRepository) CreateTx(tx *sql.Tx, order *models.Order)(int, error){
+	var id int
+	err := tx.QueryRow(`
+	INSERT INTO orders (user_id, status, total_amount)
+	VALUES ($1, $2, $3)
+	RETURNING id
+	`, order.UserID, order.Status, order.TotalAmount).Scan(&id)
+return id, err
+}
+
+func (r *orderRepository) AddOrderItemsTx(tx *sql.Tx, orderID int, items []models.OrderItem) error{
+	for _, item := range items{
+		_, err := tx.Exec(`
+		INSERT INTO order_items (order_id, product_id, quqntity, price)
+		VALUES ($1, $2, $3, $4)
+		`, orderID, item.ProductID, item.Quantity, item.Price)
+		if err !=nil{
+			return err
+		}
+	}
+	return  nil
 }
 

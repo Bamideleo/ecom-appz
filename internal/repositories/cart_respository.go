@@ -13,6 +13,7 @@ type CartRepository interface {
 	RemoveItem(cartID, productID int) error
 	GetCartWithItems(userID string) (*models.Cart, error)
 	ClearCart(cartID int) error 
+	ClearCartTx(tx *sql.Tx, cartID int) error
 }
 
 type cartRepo struct {
@@ -141,5 +142,9 @@ func (r *cartRepo) ClearCart(cartID int) error {
 		WHERE cart_id = $1
 	`, cartID)
 
+	return err
+}
+func (r *cartRepo) ClearCartTx(tx *sql.Tx, cartID int) error{
+	_, err := tx.Exec(`DELETE FROM cart_items WHERE cart_id =$1`, cartID)
 	return err
 }

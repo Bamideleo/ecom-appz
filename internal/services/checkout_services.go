@@ -1,12 +1,14 @@
 package services
 
 import (
+	"database/sql"
 	"ecom-appz/internal/models"
 	"ecom-appz/internal/repositories"
 	"errors"
 )
 
 type CheckoutService struct {
+	DB *sql.DB
 	CartRepo repositories.CartRepository
 	OrderRepo repositories.OrderRepository
 	ProductRepo repositories.ProductRepository
@@ -26,6 +28,17 @@ func NewCheckoutService(
 }
 
 func (s *CheckoutService) Checkout(userID string) (*models.Order, error){
+	tx, err := s.DB.Begin()
+	if err !=nil{
+		return nil, err
+	}
+	
+	defer func(){
+		if err != nil{
+			tx.Rollback()
+		}
+	}()
+
 	cart, err:= s.CartRepo.GetCartWithItems(userID)
 	if err !=nil{
 		return nil, err
@@ -53,10 +66,10 @@ func (s *CheckoutService) Checkout(userID string) (*models.Order, error){
 	}
 	order := models.Order{
 		UserID: userID,
-		Status: "pending",
+		Status: models.OrderPending,
 		TotalAmount: total,
 	}
-	orderID, err := s.OrderRepo.Create(&order)
+	orderID, err := s.OrderRepo.CreateTx(tx, &order)
 	if err != nil{
 		return nil, err
 	}
@@ -68,16 +81,22 @@ func (s *CheckoutService) Checkout(userID string) (*models.Order, error){
 	}
 	// Deduct stock
 	for _, item :=range cart.Items{
-		err:= s.ProductRepo.DeductStock(item.ProductID, item.Quantity)
+		err:= s.ProductRepo.DeductStockTx(tx, item.ProductID, item.Quantity)
 		if err != nil{
 			return  nil, err
 		}
 	}
 	// Clear cart
-	err = s.CartRepo.ClearCart(cart.ID)
+	err = s.CartRepo.ClearCartTx(tx, cart.ID)
 	if err != nil{
 		return nil, err
 	}
+
+	err = tx.Commit()
+	if err != nil{
+		return nil, err
+	}
+	
 	order.ID = orderID
 	order.Items = orderItems
 
